@@ -2,31 +2,41 @@ package database
 
 import (
 	"fmt"
+	baseMysqlDriver "github.com/go-sql-driver/mysql"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"log"
 	"os"
 	"strconv"
+	"time"
 )
 
 var db *gorm.DB
 
-func Connect() *gorm.DB {
-	if db != nil {
-		return db
+func DB() *gorm.DB {
+	if db == nil {
+		log.Println("database connection already exists, returning")
+		db = Connect()
 	}
 
+	return db
+}
+
+func Connect() *gorm.DB {
 	port, _ := strconv.Atoi(os.Getenv("DB_PORT"))
 
-	dsn := fmt.Sprintf(
-		"%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_HOST"),
-		port,
-		os.Getenv("DB_DATABASE"),
-	)
-	newConnection, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	config := baseMysqlDriver.Config{
+		User:                 os.Getenv("DB_USER"),
+		Passwd:               os.Getenv("DB_PASSWORD"),
+		Net:                  "tcp",
+		Addr:                 fmt.Sprintf("%s:%d", os.Getenv("DB_HOST"), port),
+		DBName:               os.Getenv("DB_DATABASE"),
+		ParseTime:            true,
+		Loc:                  time.Local,
+		AllowNativePasswords: true,
+	}
+
+	newConnection, err := gorm.Open(mysql.Open(config.FormatDSN()), &gorm.Config{})
 
 	if err != nil {
 		log.Println(err.Error())
