@@ -1,0 +1,19 @@
+services:
+  database:
+    image: mariadb:latest
+    environment:
+      - MARIADB_RANDOM_ROOT_PASSWORD=true
+      - MARIADB_DATABASE=${DB_DATABASE}
+      - MARIADB_USER=${DB_USER}
+      - MARIADB_PASSWORD=${DB_PASSWORD}
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - database:/var/lib/mysql
+    networks:
+      - finances
+networks:
+  finances:
+    driver: bridge
+volumes:
+  database:
